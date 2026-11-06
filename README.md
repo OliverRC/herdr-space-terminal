@@ -63,9 +63,31 @@ A mod only runs while a layout hosts it, and Herdr's shipped layouts and mods ar
    .when(hasTerminal, el => el.child(panelButton("terminal", "Terminal", "mods/space-terminal/terminal.svg")))
    ```
 
-6. Run `herdr-app check ~/.config/herdr-app/mods/space-terminal` and `herdr-app check ~/.config/herdr-app/mods/my-tabs`.
+6. Give the panel its own right-click menu. Herdr's offers Split, Zoom and Close pane, which fail on the panel because it isn't a tab pane. Duplicate the menu:
 
-Your copies won't pick up future Herdr changes to `main` or `tabs`.
+   ```sh
+   herdr-app do mod.clone '{"name":"menu","as":"my-menu"}'
+   ```
+
+   In `~/.config/herdr-app/mods/my-menu/main.js`, in the `case "pane"` block, add this just before its `return [`:
+
+   ```js
+   // space-terminal's panel shell isn't a tab pane: split/zoom/close would fail on it.
+   if (tg.pane === "terminal-body")
+     return [
+       ["New shell", "terminal.kill", { terminal: tg.terminal }],
+       toProgram
+         ? ["Use Herdr right-click menu", "terminal.right_click", { terminal: tg.terminal, to: "menu" }]
+         : ["Send right-clicks to pane", "terminal.right_click", { terminal: tg.terminal, to: "program" }],
+       ["Hide terminal", "layout.hide", { id: "panel" }],
+     ];
+   ```
+
+   Then add `"terminal_menu": "my-menu"` to the root node of your layout.
+
+7. Run `herdr-app check` on `~/.config/herdr-app/mods/space-terminal`, `my-tabs` and `my-menu`.
+
+Your copies won't pick up future Herdr changes to `main`, `tabs` or `menu`.
 
 ## Limits
 

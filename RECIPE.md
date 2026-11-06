@@ -19,11 +19,13 @@ A Terminal button beside Files and Changes opens a shell for the shown Space, in
 - The command is `sh -c 'while :; do "${SHELL:-/bin/sh}" -l || sleep 1; done'`: `exit` gives a fresh shell and the terminal never ends.
 - Every 500 ms, while the panel shows Terminal, the hidden copy checks that `terminal-body` shows the Space's shell. If not, it starts one when needed and `layout.set`s the block to `{ "terminal": <address> }`. A shown shell is checked to still be live every 3 s.
 - Panel open/closed per Space comes from the tab bar's own per-space memory, with `terminal` added to its enabled panels.
+- Right-clicking the panel's shell opens a short menu: `New shell` (`terminal.kill`; the mod starts a fresh one), the right-click toggle, and `Hide terminal` (`layout.hide {id: "panel"}`). Other terminals keep Herdr's menu.
 - No keys.
 
 ## Built from
 
 - Layout: a clone of `main`, with a third `panel-body` child: column `terminal` (radius 10, border, background) holding block `terminal-head` (42px, mod `space-terminal`, `{ header: true }`) and block `terminal-body` (mod `space-terminal`, `{ placeholder: true }`, swapped to a terminal at run time). A root `floating` entry hosts the hidden copy: `{ "id": "space-terminal", "content": { "mod": "space-terminal" }, "edge": "bottom", "align": "end" }`.
+- Right-click menu: a clone of `menu`, set as the layout root's `terminal_menu`, returning the short list when `target.pane` is `terminal-body`.
 - Tab bar: a clone of `tabs` with the Terminal `panelButton` and `terminal` added to its enabled panels when the layout has the slot.
 - Mod `space-terminal`, `mod.json` `{ "place": "none" }`:
   - `layout.js`: pure tree helpers (`find`, `repair`, the slot's shape), tested by `layout.test.mjs` under Node.
@@ -35,4 +37,5 @@ A Terminal button beside Files and Changes opens a shell for the shown Space, in
 
 - When a layout terminal block's terminal ends, Herdr removes the block and folds a single-child column around it into that child. Here that loses the `panel` node, which the tab bar needs. `repair()` rebuilds the slot and the `panel` column, moving `size`/`min`/`max` back onto it.
 - `layout.set` takes the whole tree. Build it from `layout()` (current clicks: shown/hidden, active child), never from the layout file, or the panel snaps back to its saved state.
+- A layout terminal block isn't a tab pane, so pane commands (`pane.split`, `pane.zoom`, `pane.close`) fail on it with "no pane terminal-body". Keep them out of its menu.
 - Each mod copy has its own `localStorage`, so the copies share state through `shared`.
